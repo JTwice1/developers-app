@@ -1,9 +1,9 @@
 //url používané na lokálnu prácu s dátami
-//const url = "./titanium.json";
+const url = "./titanium.json";
 //url na ťahanie json dát zo servera
-const url = "https://63da6fbb2af48a60a7cdc739.mockapi.io/api/v1/sample_data";
-const table = document.querySelector('.table');
+//const url = "https://63da6fbb2af48a60a7cdc739.mockapi.io/api/v1/sample_data";
 const btn = document.querySelector('.btn');
+const table = document.querySelector('.table');
 const login = document.querySelector('.login');
 const td = document.querySelectorAll('td');
 const content = document.querySelector('.content');
@@ -12,30 +12,47 @@ const developer = document.querySelector('.developer');
 const modalPhoneSection = document.querySelector('.modalPhoneSection');
 const dialPhone = new Audio('./assets/sounds/phone.mp3');
 
-
-//-----------------natiahnutie dát, ich úprava, reloadDát zobrazenie, deletovanie, 
-//-----------------search(funguje iba na prvý krát, nateraz neviem debugovať)
-//-----------------treba ešte poštudovať
-//-----------------odhlásenie z appky
-
+//---------pripojenie k dátam a ich zobrazenie, volá sa až keď je správne meno a heslo----------
 const fetchData = async () => {
     const response = await fetch(url);
     const data = await response.json();
-//    self = this.data;
-    let newData = [...data];
-    const displayItems = () => {
-        content.classList.add('flex');
-        if (newData.length < 1) {
-            table.innerHTML = `<h3 class="noMatch">Sorry, such Developers name does'nt exist in our database. Please try again.</h3>
-                                    <button class="backToDev">Back to the List of Developers</button>`;
-            const backToDev = document.querySelector('.backToDev');
-            backToDev.addEventListener('click', () => fetchData());
-            return;
+    newData = [...data];
+    displayItems(newData,data);
+};
 
-        }
-        //---------------------zobrazenie dát--------------------------
-        const displayData =  newData.map((item) => {
-            return `<tr id=${item.id} class="tr">
+//---------------začiatok login appky + natiahnutie dát--------------
+btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    const name = document.getElementById('name');
+    const password = document.getElementById('password');
+    const nameValue = name.value;
+    const passwordValue = password.value;
+    if (nameValue === 'admin' && passwordValue === '2023') {
+        login.classList.remove('flex');
+        login.classList.add('hidden');
+        fetchData();
+    } else {
+        alert('Incorrect name or password!!!');
+    }
+});
+//---------------koniec login appky + natiahnutie dát--------------
+
+
+//-------------zobrazenie dát(zároveň su tu funkčnosti mazanie riadkov, reload dát, search dát a otváranie jednotlivého developera)-------
+const displayItems = (newItems,items) => {
+    content.classList.add('flex');
+
+    if (newItems.length < 1) {
+        table.innerHTML = `<h3 class="noMatch">Sorry, such Developer name doesn't exist in our database. Please try again.</h3>
+                                <button class="backToDev">Back to the List of Developers</button>`;
+        const backToDev = document.querySelector('.backToDev');
+        backToDev.addEventListener('click', () => fetchData());
+        return;
+
+    }
+
+    const displayData = newItems.map((item) => {
+        return `<tr id=${item.id} class="tr">
                     <td><img src="${item.avatar}"/></td>
                     <td>${item.name}</td>
                     <td><a href="#">${item.phone_number}</a></td>
@@ -44,10 +61,10 @@ const fetchData = async () => {
                             <i class="fas fa-times"></i>
                         </button></td>
                 </tr>`;
-        }).join("");
-        table.innerHTML =
-                ` <form class="searchForm">
-                    <input type="text" id="search" name="search" class="search" 
+    }).join("");
+    table.innerHTML =
+            ` <form class="searchForm">
+                    <input type="search" id="search" name="search" class="search" 
                         placeholder="Search by name">
                 </form>
                 <div class="reloadData">
@@ -70,43 +87,40 @@ const fetchData = async () => {
                 </tbody>
             </table>
             </div>`;
-        
-        //---------------listener na odstránenie riadku v zozname-------------------
-        const deleteBtn = document.querySelectorAll('.deleteBtn');
-        deleteBtn.forEach(function (btn) {
-            btn.addEventListener('click', deletePerson);
-        });
-        
-        //------------------listener na otvorenie detailov developera----------------
-        const trows = document.querySelectorAll('.tr');
-        trows.forEach(function (trow) {
-            trow.addEventListener('dblclick', openDeveloper);
-        });
-    };
-    displayItems();
-    
-    //----------------zatiaľ nepodarený search podľa mena-------------------
-    const searchForm = document.querySelector('.searchForm');
-    const search = document.querySelector('.search');
 
-    searchForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        let value = search.value;
-        newData = data.filter((person) => {
-            let finalValue = person.name.toLowerCase().startsWith(value);
-            return finalValue;
-        });
-        displayItems();
+      //---------------listener na odstránenie riadku v zozname-------------------       
+    const deleteBtn = document.querySelectorAll('.deleteBtn');
+    deleteBtn.forEach(function (btn) {
+        btn.addEventListener('click', deletePerson);
     });
-    
+    //------------------listener na otvorenie detailov developera----------------
+    const trows = document.querySelectorAll('.tr');
+    trows.forEach(function (trow) {
+        trow.addEventListener('dblclick', openDeveloper);
+    });
     //----------------reload dát--------------------
-    const reloadDataBtn = document.querySelector('.reloadDataBtn');
-    reloadDataBtn.addEventListener('click', ()=> fetchData());
-    //akože odhlásenie
-    const logOut = document.querySelector('.logOut');
-    logOut.addEventListener('click', ()=> window.location.reload());
+  const reloadDataBtn = document.querySelector('.reloadDataBtn');
+  reloadDataBtn.addEventListener('click', ()=> fetchData());
+  //akože odhlásenie
+  const logOut = document.querySelector('.logOut');
+  logOut.addEventListener('click', ()=> window.location.reload());
 //      https://developers-app.netlify.app/   http://localhost:8383/Titanium-developers-app/index.html
+
+ //----------------search podľa mena-------------------
+ const searchForm = document.querySelector('.searchForm');
+ const search = document.querySelector('.search');
+
+ searchForm.addEventListener('submit', () => {
+     let value = search.value;
+     newItems = items.filter((person) => {
+         let finalValue = person.name.toLowerCase().includes(value);
+         return finalValue;
+     });
+     displayItems(newItems,items);
+ });
 };
+
+  
 
 //-----------mazanie jednotlivých osôb, funkcia volaná v rámci funkcie displayItems-------------
 function deletePerson(e) {
@@ -114,25 +128,6 @@ function deletePerson(e) {
     const tbody = document.getElementById('tbody');
     tbody.removeChild(element);
 }
-
-//---------------začiatok login appky + natiahnutie dát--------------
-
-btn.addEventListener('click', function (e) {
-    e.preventDefault();
-    const name = document.getElementById('name');
-    const password = document.getElementById('password');
-    const nameValue = name.value;
-    const passwordValue = password.value;
-    if (nameValue === 'admin' && passwordValue === '2023') {
-        login.classList.remove('flex');
-        login.classList.add('hidden');
-        fetchData();
-    } else {
-        alert('Incorrect name(login) or password!!! Please try again.');
-    }
-});
-
-//---------------koniec login appky + natiahnutie dát--------------
 
 //---------------otvorí podrobný list developera, volaná vo funkcii displayItems------------
 function openDeveloper(e) {
@@ -145,8 +140,6 @@ function openDeveloper(e) {
     const phone = e.currentTarget.children[2].children[0].textContent;
     const email = e.currentTarget.children[3].children[0].textContent;
     const id = e.currentTarget.id;
-    //console.log(phone);
-    //console.log(email);
 
     developer.innerHTML = `<div class="developerContainer">
                 <h1 class="developerNumber">Developer: <span>${id}</span></h1>
@@ -164,7 +157,6 @@ function openDeveloper(e) {
     modalPhone.addEventListener('click', openModalPhone);
     const modalEmail = document.querySelector('.modalEmail');
     modalEmail.addEventListener('click', openModalEmail);
-
 }
 
 //-------------návrat do zoznamu developerov, volaná vo funkcii openDeveloper----------------
@@ -172,6 +164,7 @@ const backToData = () => {
     content.classList.remove('hidden');
     developer.classList.add('hidden');
 };
+
 
 //---------------otvára a zatvára dialógové okno na simulované volanie developerovi----------------
 const openModalPhone = (e) => {
@@ -192,7 +185,6 @@ const openModalPhone = (e) => {
     const closeModalPhone = document.querySelector('.closeModalPhone');
     closeModalPhone.addEventListener('click', closePhone);
 };
-
 //-----------------uzatvára dialógové okno na simulované volanie developerovi------------------
 function closePhone() {
     developer.classList.remove('hidden');
@@ -201,6 +193,7 @@ function closePhone() {
     modalPhoneSection.classList.remove('boxShadow');
     dialPhone.pause();
     dialPhone.currentTime = 0;
+
 }
 ;
 
@@ -233,5 +226,3 @@ emailBtn.addEventListener('click', ()=> window.open(`mailto:${email}?subject=sub
     }
     ;
 };
-
-
